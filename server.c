@@ -66,7 +66,6 @@ int main(int argc, char *argv[])
 	    if (handler[1] == 'h'){
 		get_pool(pool_status);
 	    }
-	    if (handler[1] == 't'){}
 	    if (handler[0] == 'b'){
 		pthread_cond_wait(&(pool_status->block_cond), &(pool_status->request_mutex));
 	    }
@@ -84,6 +83,9 @@ int main(int argc, char *argv[])
         }
 	pthread_mutex_unlock(&(pool_status->request_mutex));
 	connfd = Accept(listenfd, (SA *)&clientaddr, (socklen_t *) &clientlen);
+	if (handler[1] == 't'){
+	    continue;
+	}
 	pool = pool_create(connfd);
    
 
