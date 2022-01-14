@@ -127,6 +127,40 @@ int Open_listenfd(int port);
 /* Our need*/
 
 
+struct pool {
+    int request;
+    struct timeval *arrival_time;
+    struct pool *next;
+};
+typedef struct pool pool_t;
+
+struct pool_status {
+    pool_t *first;
+    pool_t *last;
+    pthread_mutex_t request_mutex;
+    pthread_cond_t pool_cond;
+    pthread_cond_t block_cond;
+    
+    int size;
+    int buffer;
+};
+typedef struct pool_status pool_status_t;
+
+struct thread_stats {
+    int handler_thread_id;
+    int handler_thread_req_count;
+    int handler_thread_static_req_count;
+    int handler_thread_dynamic_req_count;    
+};
+typedef struct thread_stats thread_stats_t;
+
+struct stats {
+    struct timeval *arrival_time;
+    struct timeval *dispatch_time;
+    thread_stats_t *handler_thread_stats;
+    pool_status_t *pool_status;
+};
+typedef struct stats stats_t;
 
 
 
