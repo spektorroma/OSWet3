@@ -49,10 +49,11 @@ void clientPrint(int fd)
   int length = 0;
   int n;
   
+  
   Rio_readinitb(&rio, fd);
-
   /* Read and display the HTTP Header */
   n = Rio_readlineb(&rio, buf, MAXBUF);
+
   while (strcmp(buf, "\r\n") && (n > 0)) {
     printf("Header: %s", buf);
     n = Rio_readlineb(&rio, buf, MAXBUF);
@@ -90,8 +91,9 @@ int main(int argc, char *argv[])
   clientfd = Open_clientfd(host, port);
   
   clientSend(clientfd, filename);
+
   clientPrint(clientfd);
-    
+  
   Close(clientfd);
 
   exit(0);

@@ -25,6 +25,7 @@
 #include <arpa/inet.h>
 
 
+
 /* Default file permissions are DEF_MODE & ~DEF_UMASK */
 /* $begin createmasks */
 #define DEF_MODE   S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH
@@ -124,33 +125,9 @@ int Open_listenfd(int port);
 
 
 /* Our need*/
-struct pool {
-    int request;
-    struct pool *next;
-};
-typedef struct pool pool_t;
-
-struct pool_status {
-    pool_t *first;
-    pool_t *last;
-    pthread_mutex_t request_mutex;
-    pthread_cond_t pool_cond;
-    pthread_cond_t block_cond;
-    void (*func)(int request);
-    int size;
-    int buffer;
-};
-typedef struct pool_status pool_status_t;
 
 
 
-
-
-void *thread_func(void *arg);
-pool_t *pool_create(int request);
-void pool_destroy(pool_t *pool);
-pool_t *get_pool(pool_status_t *request_pool);
-pool_t *get_pool_by_num(pool_status_t *request_pool, int num);
 
 
 #endif /* __CSAPP_H__ */

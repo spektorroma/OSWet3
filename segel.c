@@ -1,4 +1,5 @@
 #include "segel.h"
+#include "request.h"
 
 /************************** 
  * Error-handling functions
@@ -402,7 +403,7 @@ ssize_t rio_readlineb(rio_t *rp, void *usrbuf, size_t maxlen)
 {
     int n, rc;
     char c, *bufp = usrbuf;
-
+   
     for (n = 1; n < maxlen; n++) { 
         if ((rc = rio_read(rp, &c, 1)) == 1) {
             *bufp++ = c;
@@ -455,8 +456,8 @@ ssize_t Rio_readnb(rio_t *rp, void *usrbuf, size_t n)
 
 ssize_t Rio_readlineb(rio_t *rp, void *usrbuf, size_t maxlen) 
 {
+    
     ssize_t rc;
-
     if ((rc = rio_readlineb(rp, usrbuf, maxlen)) < 0)
         unix_error("Rio_readlineb error");
     return rc;
@@ -575,84 +576,3 @@ int Open_listenfd(int port)
 
 
 
-pool_t *pool_create(int request){
-    pool_t *pool;
-
-    pool = malloc(sizeof(*pool));
-    pool->request = request;
-    pool->next = NULL;
-    return pool;
-}
-
-void pool_destroy(pool_t *pool)
-{
-    if (pool == NULL)
-        return;
-    free(pool);
-}
-
-pool_t *get_pool(pool_status_t *request_pool)
-{
-    pool_t *pool;
-
-    pool = request_pool->first;
-    if (pool == NULL)
-        return NULL;
-
-    if (pool->next == NULL) {
-        request_pool->first = NULL;
-        request_pool->last  = NULL;
-    } else {
-        request_pool->first = pool->next;
-    }
-    if (request_pool->size == request_pool->buffer){
-	  pthread_cond_signal(&(request_pool->block_cond));
-    }
-    request_pool->size--;
-    return pool;
-}
-
-pool_t *get_pool_by_num(pool_status_t *request_pool, int num)
-{
-    pool_t *pool, *trash;
-
-    pool = request_pool->first;
-    if (num == 0){
-	request_pool->first = pool->next;
-	if (pool->next == NULL)
-	   request_pool->last = NULL;
-        return pool;
-    }
-    while (num > 1){
-	pool = pool->next;
-	num--;
-    }
-    trash = pool->next;
-    pool->next = trash->next;
-    if (trash->next == NULL){
-	request_pool->last = NULL;
-    }
-    request_pool->size--;
-    return pool;
-}
-
-
-void *thread_func(void *arg){
-    pool_status_t *pool_stat = arg;
-    pool_t *pool;
-    
-    while(1){
-	pthread_mutex_lock(&(pool_stat->request_mutex));
-	
-	while(pool_stat->first == NULL)
-	    pthread_cond_wait(&(pool_stat->pool_cond), &(pool_stat->request_mutex));
-	pool = get_pool(pool_stat);
-	pthread_mutex_unlock(&(pool_stat->request_mutex));
-	if(pool != NULL){
-	    pool_stat->func(pool->request);
-            Close(pool->request);
-	    pool_destroy(pool);
-	}
-	
-    }
-}
